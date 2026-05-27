@@ -28,6 +28,7 @@ function runCycle(): Promise<void> {
 
 async function loop(): Promise<void> {
   while (true) {
+    console.log(`[daemon] tick ${new Date().toISOString()} pollMs=${pollMs}`);
     try {
       await runCycle();
     } catch (error) {
