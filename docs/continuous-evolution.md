@@ -81,16 +81,29 @@ npm run memory:update
 npm run github:sync
 ```
 
-## Programacion automatica en Windows
+## Programacion automatica
+
+### Opcion A: daemon (recomendada)
+
+```bash
+npm run learn:daemon
+```
+
+El daemon consulta cada 30 minutos y ejecuta ciclo solo cuando corresponde:
+
+- turbo: 1 vez por hora
+- estable/infinito: 1 vez cada 8 horas
+
+### Opcion B: Windows Task Scheduler
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools/setup-evolution-tasks.ps1 -ProjectRoot "E:\agentes\brasitec-ai-core" -KnowledgeRoot "H:\aprendizado ia"
 ```
 
-Tareas creadas:
+Notas:
 
-- `BrasitecAICore-Turbo` (cada hora, 5 dias)
-- `BrasitecAICore-Stable` (cada 8h, desde dia 6)
+- Puede requerir permisos administrativos.
+- Si el entorno bloquea `schtasks`, usa opcion A (daemon).
 
 ## Extension del sistema
 

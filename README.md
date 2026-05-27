@@ -60,6 +60,7 @@ Backend por defecto: `http://localhost:4000`
 - `npm run client:cli -- --help`: muestra comandos de la CLI.
 - `npm run scanner:build`: compila modulo github-scanner.
 - `npm run learn:cycle`: ejecuta un ciclo de evolucion por fase.
+- `npm run learn:daemon`: ejecuta evolucion continua en modo daemon.
 - `npm run learn:turbo`: ejecuta aprendizaje turbo manual.
 - `npm run knowledge:clean`: limpia base bruta.
 - `npm run knowledge:compress`: comprime base.
@@ -107,7 +108,7 @@ console.log(result.examplesUsed);
 
 ## Automatizacion De Evolucion
 
-Configura tareas de Windows para ejecutar turbo 5 dias y luego modo estable:
+Configura evolucion continua con daemon o tareas programadas:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools/setup-evolution-tasks.ps1 -ProjectRoot "E:\agentes\brasitec-ai-core" -KnowledgeRoot "H:\aprendizado ia"

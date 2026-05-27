@@ -18,14 +18,20 @@ $d1 = $startTurbo.ToString("MM/dd/yyyy")
 $t2 = $startStable.ToString("HH:mm")
 $d2 = $startStable.ToString("MM/dd/yyyy")
 
-$turboCmd = "powershell -NoProfile -ExecutionPolicy Bypass -File `"$runner`" -KnowledgeRoot `"$KnowledgeRoot`""
+$taskCommand = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$runner`""
 
 try { schtasks.exe /Delete /TN "BrasitecAICore-Turbo" /F | Out-Null } catch { }
 try { schtasks.exe /Delete /TN "BrasitecAICore-Stable" /F | Out-Null } catch { }
 
-schtasks.exe /Create /SC HOURLY /MO 1 /DUR 120:00 /TN "BrasitecAICore-Turbo" /TR $turboCmd /ST $t1 /SD $d1 /RL HIGHEST /F | Out-Null
-schtasks.exe /Create /SC HOURLY /MO 8 /TN "BrasitecAICore-Stable" /TR $turboCmd /ST $t2 /SD $d2 /RL HIGHEST /F | Out-Null
+$turboResult = & schtasks.exe /Create /SC MINUTE /MO 60 /DU 120:00 /TN "BrasitecAICore-Turbo" /TR $taskCommand /ST $t1 /SD $d1 /RL HIGHEST /F
+$stableResult = & schtasks.exe /Create /SC HOURLY /MO 8 /TN "BrasitecAICore-Stable" /TR $taskCommand /ST $t2 /SD $d2 /RL HIGHEST /F
 
+if ($LASTEXITCODE -ne 0) {
+  throw "No se pudieron registrar tareas en Task Scheduler."
+}
+
+Write-Host $turboResult
+Write-Host $stableResult
 Write-Host "Tareas registradas: BrasitecAICore-Turbo y BrasitecAICore-Stable"
 Write-Host "Turbo inicia: $startTurbo"
 Write-Host "Stable inicia: $startStable"

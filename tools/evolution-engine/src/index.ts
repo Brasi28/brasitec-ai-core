@@ -110,6 +110,12 @@ async function runCycle(): Promise<void> {
   const state = await readState();
   const phase = resolvePhase(state);
 
+  const intervalHours = phase === "turbo" ? 1 : 8;
+  if (!shouldRun(state.lastCycleAt, intervalHours)) {
+    console.log(JSON.stringify({ phase, skipped: true, reason: "cycle-not-due", knowledgeRoot: KN_ROOT }));
+    return;
+  }
+
   if (phase === "turbo") {
     await runWorkspaceTool("tools/local-learning-engine", ["--mode", "turbo", "--maxRepos", "6", "--maxFiles", "150"]);
 

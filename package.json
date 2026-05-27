@@ -22,6 +22,7 @@
     "client:cli": "npm --workspace client run cli",
     "scanner:build": "npm --workspace tools/github-scanner run build",
     "learn:cycle": "npm --workspace tools/evolution-engine run run",
+    "learn:daemon": "npm --workspace tools/evolution-engine run daemon",
     "learn:turbo": "npm --workspace tools/local-learning-engine run run -- --mode turbo --maxRepos 6 --maxFiles 150",
     "knowledge:clean": "npm --workspace tools/knowledge-cleaner run run",
     "knowledge:compress": "npm --workspace tools/knowledge-compressor run run",
