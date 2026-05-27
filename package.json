@@ -1,0 +1,35 @@
+{
+  "name": "brasitec-ai-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Central AI engine with reusable agents, backend API, and client SDK/CLI.",
+  "workspaces": [
+    "backend",
+    "client",
+    "tools/github-scanner",
+    "tools/local-learning-engine",
+    "tools/knowledge-cleaner",
+    "tools/knowledge-compressor",
+    "tools/github-sync",
+    "tools/evolution-engine",
+    "tools/long-term-memory",
+    "tools/knowledge-rotator"
+  ],
+  "scripts": {
+    "build": "npm run -ws build",
+    "dev": "npm run -ws --if-present dev",
+    "start": "npm --workspace backend run start",
+    "client:cli": "npm --workspace client run cli",
+    "scanner:build": "npm --workspace tools/github-scanner run build",
+    "learn:cycle": "npm --workspace tools/evolution-engine run run",
+    "learn:turbo": "npm --workspace tools/local-learning-engine run run -- --mode turbo --maxRepos 6 --maxFiles 150",
+    "knowledge:clean": "npm --workspace tools/knowledge-cleaner run run",
+    "knowledge:compress": "npm --workspace tools/knowledge-compressor run run",
+    "knowledge:rotate": "npm --workspace tools/knowledge-rotator run run",
+    "memory:update": "npm --workspace tools/long-term-memory run run",
+    "github:sync": "npm --workspace tools/github-sync run run -- --allow"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

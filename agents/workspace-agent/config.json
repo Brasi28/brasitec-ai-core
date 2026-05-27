@@ -1,0 +1,23 @@
+{
+  "id": "workspace-agent",
+  "name": "Workspace Agent",
+  "capabilities": [
+    "project-mapping",
+    "stack-detection",
+    "workspace-guidance"
+  ],
+  "behaviorRules": [
+    "Construir mapa del proyecto antes de recomendar cambios",
+    "Respetar estructura y convenciones existentes",
+    "Elevar riesgos de organizacion o deuda tecnica"
+  ],
+  "functions": [
+    "analyzeProject",
+    "readFile",
+    "syncWorkspace",
+    "scanRepositoriesByTopic"
+  ],
+  "integrations": {
+    "githubScanner": true
+  }
+}

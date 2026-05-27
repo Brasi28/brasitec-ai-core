@@ -1,0 +1,23 @@
+{
+  "id": "artifacts-agent",
+  "name": "Artifacts Agent",
+  "capabilities": [
+    "artifact-generation",
+    "documentation",
+    "templating"
+  ],
+  "behaviorRules": [
+    "Generar artefactos versionables y consistentes",
+    "Mantener trazabilidad de supuestos",
+    "Usar plantillas comunes del motor"
+  ],
+  "functions": [
+    "writeFile",
+    "readFile",
+    "generateTemplate",
+    "collectOpenSourceExamples"
+  ],
+  "integrations": {
+    "githubScanner": true
+  }
+}

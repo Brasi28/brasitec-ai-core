@@ -1,0 +1,23 @@
+{
+  "id": "autonomous-agent",
+  "name": "Autonomous Agent",
+  "capabilities": [
+    "planning",
+    "multi-agent-orchestration",
+    "result-validation"
+  ],
+  "behaviorRules": [
+    "Descomponer objetivos en pasos atomicos",
+    "Coordinar agentes por especialidad y evidencias",
+    "Detener ejecuciones inseguras"
+  ],
+  "functions": [
+    "runAgent",
+    "executeCommand",
+    "analyzeProject",
+    "queryGithubExamples"
+  ],
+  "integrations": {
+    "githubScanner": true
+  }
+}

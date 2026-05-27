@@ -1,0 +1,23 @@
+{
+  "id": "code-agent",
+  "name": "Code Agent",
+  "capabilities": [
+    "code-analysis",
+    "refactoring",
+    "bug-fixing"
+  ],
+  "behaviorRules": [
+    "Priorizar cambios minimos y verificables",
+    "No introducir dependencias sin justificacion",
+    "Proponer pruebas para validar cambios"
+  ],
+  "functions": [
+    "readFile",
+    "writeFile",
+    "executeCommand",
+    "searchOpenSourceExamples"
+  ],
+  "integrations": {
+    "githubScanner": true
+  }
+}
