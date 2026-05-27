@@ -128,7 +128,8 @@ async function runCycle(): Promise<void> {
       process.env.LEARN_TURBO_MAX_FILES || (HIGH_LOAD_MODE ? "220" : "150")
     ]);
 
-    if (shouldRun(state.lastNightlyCleanAt, 24)) {
+    const mustCleanNow = ALWAYS_ON_LEARNING || HIGH_LOAD_MODE;
+    if (mustCleanNow || shouldRun(state.lastNightlyCleanAt, 24)) {
       await runWorkspaceTool("tools/knowledge-cleaner");
       await runWorkspaceTool("tools/knowledge-compressor");
       state.lastNightlyCleanAt = nowIso();

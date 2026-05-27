@@ -100,6 +100,8 @@ Para modo 24/7 continuo (sin saltar ciclos), define:
 - `HIGH_LOAD_MODE=true`
 - `EVOLUTION_POLL_MS=300000`
 
+En este modo, ademas de `knowledge-raw.json`, tambien se refresca `knowledge-base.json` en cada ciclo.
+
 ### Arranque automatico en login
 
 ```powershell
