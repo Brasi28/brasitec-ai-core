@@ -94,6 +94,12 @@ El daemon consulta cada 30 minutos y ejecuta ciclo solo cuando corresponde:
 - turbo: 1 vez por hora
 - estable/infinito: 1 vez cada 8 horas
 
+Para modo 24/7 continuo (sin saltar ciclos), define:
+
+- `ALWAYS_ON_LEARNING=true`
+- `HIGH_LOAD_MODE=true`
+- `EVOLUTION_POLL_MS=300000`
+
 ### Arranque automatico en login
 
 ```powershell

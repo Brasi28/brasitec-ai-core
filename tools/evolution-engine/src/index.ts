@@ -19,6 +19,8 @@ const KN_ROOT = path.resolve(process.env.KNOWLEDGE_ROOT || "H:\\aprendizado ia")
 const STATE_FILE = path.join(KN_ROOT, "evolution-state.json");
 const RAW_FILE = path.join(KN_ROOT, "knowledge-raw.json");
 const ARCHIVE_DIR = path.join(KN_ROOT, "archive");
+const HIGH_LOAD_MODE = (process.env.HIGH_LOAD_MODE || "false").toLowerCase() === "true";
+const ALWAYS_ON_LEARNING = (process.env.ALWAYS_ON_LEARNING || "true").toLowerCase() !== "false";
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -110,14 +112,21 @@ async function runCycle(): Promise<void> {
   const state = await readState();
   const phase = resolvePhase(state);
 
-  const intervalHours = phase === "turbo" ? 1 : 8;
-  if (!shouldRun(state.lastCycleAt, intervalHours)) {
+  const intervalHours = HIGH_LOAD_MODE ? 1 : phase === "turbo" ? 1 : 8;
+  if (!ALWAYS_ON_LEARNING && !shouldRun(state.lastCycleAt, intervalHours)) {
     console.log(JSON.stringify({ phase, skipped: true, reason: "cycle-not-due", knowledgeRoot: KN_ROOT }));
     return;
   }
 
   if (phase === "turbo") {
-    await runWorkspaceTool("tools/local-learning-engine", ["--mode", "turbo", "--maxRepos", "6", "--maxFiles", "150"]);
+    await runWorkspaceTool("tools/local-learning-engine", [
+      "--mode",
+      "turbo",
+      "--maxRepos",
+      process.env.LEARN_TURBO_MAX_REPOS || (HIGH_LOAD_MODE ? "8" : "6"),
+      "--maxFiles",
+      process.env.LEARN_TURBO_MAX_FILES || (HIGH_LOAD_MODE ? "220" : "150")
+    ]);
 
     if (shouldRun(state.lastNightlyCleanAt, 24)) {
       await runWorkspaceTool("tools/knowledge-cleaner");
@@ -125,7 +134,14 @@ async function runCycle(): Promise<void> {
       state.lastNightlyCleanAt = nowIso();
     }
   } else {
-    await runWorkspaceTool("tools/local-learning-engine", ["--mode", "stable", "--maxRepos", "3", "--maxFiles", "80"]);
+    await runWorkspaceTool("tools/local-learning-engine", [
+      "--mode",
+      "stable",
+      "--maxRepos",
+      process.env.LEARN_STABLE_MAX_REPOS || (HIGH_LOAD_MODE ? "5" : "3"),
+      "--maxFiles",
+      process.env.LEARN_STABLE_MAX_FILES || (HIGH_LOAD_MODE ? "160" : "80")
+    ]);
 
     await runWorkspaceTool("tools/knowledge-cleaner");
     await runWorkspaceTool("tools/knowledge-compressor");
@@ -145,7 +161,16 @@ async function runCycle(): Promise<void> {
   state.lastCycleAt = nowIso();
 
   await saveState(state);
-  console.log(JSON.stringify({ phase, updatedAt: state.lastCycleAt, knowledgeRoot: KN_ROOT }));
+  console.log(
+    JSON.stringify({
+      phase,
+      updatedAt: state.lastCycleAt,
+      knowledgeRoot: KN_ROOT,
+      highLoadMode: HIGH_LOAD_MODE,
+      alwaysOnLearning: ALWAYS_ON_LEARNING,
+      intervalHours
+    })
+  );
 }
 
 runCycle().catch((error) => {

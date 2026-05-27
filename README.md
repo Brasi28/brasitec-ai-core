@@ -134,6 +134,16 @@ El aprendizaje puede ejecutarse en modo GPU estricto (por defecto):
 - Si no hay GPU activa en `nvidia-smi` o `ollama ps`, el ciclo falla.
 - El scoring de patrones se realiza con embeddings en Ollama (`OLLAMA_MODEL`).
 
+## Aprendizaje 24/7
+
+Configuracion recomendada para aprendizaje continuo:
+
+- `ALWAYS_ON_LEARNING=true`
+- `HIGH_LOAD_MODE=true`
+- `EVOLUTION_POLL_MS=300000` (5 minutos)
+
+Con esta configuracion el daemon ejecuta ciclos de forma ininterrumpida 24/7.
+
 ## Publicacion en GitHub
 
 ```bash

@@ -2,7 +2,9 @@ import { spawn } from "node:child_process";
 import path from "node:path";
 
 const root = path.resolve(process.cwd(), "..", "..");
-const pollMs = Number(process.env.EVOLUTION_POLL_MS || 30 * 60 * 1000);
+const highLoadMode = (process.env.HIGH_LOAD_MODE || "false").toLowerCase() === "true";
+const defaultPollMs = highLoadMode ? 5 * 60 * 1000 : 30 * 60 * 1000;
+const pollMs = Number(process.env.EVOLUTION_POLL_MS || defaultPollMs);
 
 function runCycle(): Promise<void> {
   return new Promise((resolve, reject) => {
