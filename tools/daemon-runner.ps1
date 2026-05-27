@@ -18,6 +18,7 @@ $env:LEARN_STABLE_MAX_REPOS = "5"
 $env:LEARN_STABLE_MAX_FILES = "160"
 $env:PAUSE_MIN_MS = "80"
 $env:PAUSE_MAX_MS = "300"
+$env:REPO_REVISIT_HOURS = "0"
 
 Set-Location $projectRoot
 npm run learn:daemon

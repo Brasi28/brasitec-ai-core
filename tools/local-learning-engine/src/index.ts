@@ -40,6 +40,10 @@ const HISTORY_FILE = path.join(KN_ROOT, "repo-history.json");
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "nomic-embed-text";
 const GPU_REQUIRED = (process.env.GPU_REQUIRED || "true").toLowerCase() !== "false";
+const HIGH_LOAD_MODE = (process.env.HIGH_LOAD_MODE || "false").toLowerCase() === "true";
+const PAUSE_MIN_MS = Number(process.env.PAUSE_MIN_MS || (HIGH_LOAD_MODE ? 80 : 700));
+const PAUSE_MAX_MS = Number(process.env.PAUSE_MAX_MS || (HIGH_LOAD_MODE ? 300 : 2200));
+const REPO_REVISIT_HOURS = Number(process.env.REPO_REVISIT_HOURS || (HIGH_LOAD_MODE ? 1 : 24));
 
 const CODE_EXTENSIONS = new Set([
   ".ts",
@@ -74,6 +78,17 @@ function parseArg(name: string, fallback: string): string {
 function parseIntArg(name: string, fallback: number): number {
   const value = Number(parseArg(name, String(fallback)));
   return Number.isFinite(value) ? value : fallback;
+}
+
+function canRevisit(lastSeenIso: string | undefined): boolean {
+  if (REPO_REVISIT_HOURS <= 0) {
+    return true;
+  }
+  if (!lastSeenIso) {
+    return true;
+  }
+  const diffMs = Date.now() - new Date(lastSeenIso).getTime();
+  return diffMs >= REPO_REVISIT_HOURS * 60 * 60 * 1000;
 }
 
 async function ensureDirs(): Promise<void> {
@@ -337,8 +352,13 @@ async function run(): Promise<void> {
   await assertGpuReady();
 
   const mode = parseArg("mode", "stable");
-  const maxRepos = parseIntArg("maxRepos", mode === "turbo" ? 8 : 3);
-  const maxFilesPerRepo = parseIntArg("maxFiles", mode === "turbo" ? 150 : 80);
+  const defaultTurboRepos = Number(process.env.LEARN_TURBO_MAX_REPOS || 8);
+  const defaultStableRepos = Number(process.env.LEARN_STABLE_MAX_REPOS || 3);
+  const defaultTurboFiles = Number(process.env.LEARN_TURBO_MAX_FILES || 150);
+  const defaultStableFiles = Number(process.env.LEARN_STABLE_MAX_FILES || 80);
+
+  const maxRepos = parseIntArg("maxRepos", mode === "turbo" ? defaultTurboRepos : defaultStableRepos);
+  const maxFilesPerRepo = parseIntArg("maxFiles", mode === "turbo" ? defaultTurboFiles : defaultStableFiles);
 
   const history = await readJsonSafe<RepoHistory>(HISTORY_FILE, { seen: {} });
   const raw = await readJsonSafe<RawKnowledge>(RAW_FILE, { updatedAt: nowIso(), patterns: [] });
@@ -351,7 +371,7 @@ async function run(): Promise<void> {
       break;
     }
 
-    if (history.seen[repo.full_name]) {
+    if (!canRevisit(history.seen[repo.full_name])) {
       continue;
     }
 
@@ -372,7 +392,7 @@ async function run(): Promise<void> {
     processed += 1;
 
     await writeWorkspacePatternChunk(patterns);
-    await randomPause(700, 2200);
+    await randomPause(PAUSE_MIN_MS, PAUSE_MAX_MS);
   }
 
   raw.updatedAt = nowIso();
@@ -387,7 +407,11 @@ async function run(): Promise<void> {
       patternsStored: raw.patterns.length,
       knowledgeRoot: KN_ROOT,
       gpuRequired: GPU_REQUIRED,
-      ollamaModel: OLLAMA_MODEL
+      ollamaModel: OLLAMA_MODEL,
+      highLoadMode: HIGH_LOAD_MODE,
+      repoRevisitHours: REPO_REVISIT_HOURS,
+      pauseMinMs: PAUSE_MIN_MS,
+      pauseMaxMs: PAUSE_MAX_MS
     })
   );
 }
