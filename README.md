@@ -114,6 +114,18 @@ Configura evolucion continua con daemon o tareas programadas:
 powershell -ExecutionPolicy Bypass -File tools/setup-evolution-tasks.ps1 -ProjectRoot "E:\agentes\brasitec-ai-core" -KnowledgeRoot "H:\aprendizado ia"
 ```
 
+Arranque automatico al iniciar sesion (recomendado):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/install-autostart.ps1 -ProjectRoot "E:\agentes\brasitec-ai-core" -KnowledgeRoot "H:\aprendizado ia"
+```
+
+Desinstalar arranque automatico:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/remove-autostart.ps1
+```
+
 ## Publicacion en GitHub
 
 ```bash

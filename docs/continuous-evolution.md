@@ -94,6 +94,14 @@ El daemon consulta cada 30 minutos y ejecuta ciclo solo cuando corresponde:
 - turbo: 1 vez por hora
 - estable/infinito: 1 vez cada 8 horas
 
+### Arranque automatico en login
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/install-autostart.ps1 -ProjectRoot "E:\agentes\brasitec-ai-core" -KnowledgeRoot "H:\aprendizado ia"
+```
+
+Esto crea `BrasitecAICoreDaemon.cmd` en la carpeta Startup del usuario.
+
 ### Opcion B: Windows Task Scheduler
 
 ```powershell
