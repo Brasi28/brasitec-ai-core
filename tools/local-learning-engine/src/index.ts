@@ -37,6 +37,9 @@ const REPOS_DIR = path.join(KN_ROOT, "repos");
 const WORKSPACE_DIR = path.join(KN_ROOT, "workspace", "patterns");
 const RAW_FILE = path.join(KN_ROOT, "knowledge-raw.json");
 const HISTORY_FILE = path.join(KN_ROOT, "repo-history.json");
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434";
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "nomic-embed-text";
+const GPU_REQUIRED = (process.env.GPU_REQUIRED || "true").toLowerCase() !== "false";
 
 const CODE_EXTENSIONS = new Set([
   ".ts",
@@ -81,6 +84,59 @@ async function ensureDirs(): Promise<void> {
 
 async function sleep(ms: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function runCommand(command: string, args: string[]): Promise<{ stdout: string; stderr: string; code: number }> {
+  return await new Promise((resolve) => {
+    const child = spawn(command, args, { windowsHide: true });
+    let stdout = "";
+    let stderr = "";
+
+    child.stdout.on("data", (chunk) => {
+      stdout += String(chunk);
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += String(chunk);
+    });
+
+    child.on("close", (code) => {
+      resolve({ stdout, stderr, code: code ?? 1 });
+    });
+    child.on("error", () => {
+      resolve({ stdout, stderr, code: 1 });
+    });
+  });
+}
+
+async function assertGpuReady(): Promise<void> {
+  if (!GPU_REQUIRED) {
+    return;
+  }
+
+  const smi = await runCommand("nvidia-smi", ["--query-gpu=name,utilization.gpu", "--format=csv,noheader"]);
+  if (smi.code !== 0 || !smi.stdout.trim()) {
+    throw new Error("GPU requerida pero nvidia-smi no esta disponible.");
+  }
+
+  const ollamaVersion = await runCommand("ollama", ["--version"]);
+  if (ollamaVersion.code !== 0) {
+    throw new Error("GPU requerida pero ollama no esta disponible.");
+  }
+
+  const list = await runCommand("ollama", ["list"]);
+  if (!list.stdout.toLowerCase().includes(OLLAMA_MODEL.toLowerCase())) {
+    console.log(`[gpu] modelo ${OLLAMA_MODEL} no encontrado, descargando...`);
+    const pull = await runCommand("ollama", ["pull", OLLAMA_MODEL]);
+    if (pull.code !== 0) {
+      throw new Error(`No se pudo descargar modelo Ollama requerido: ${OLLAMA_MODEL}`);
+    }
+  }
+
+  await gpuEmbeddingScore("GPU warmup snippet", "text");
+  const ps = await runCommand("ollama", ["ps"]);
+  if (!ps.stdout.toLowerCase().includes("gpu")) {
+    throw new Error("GPU requerida pero Ollama no reporta procesamiento en GPU (ollama ps). Aborto por modo estricto.");
+  }
 }
 
 async function randomPause(minMs: number, maxMs: number): Promise<void> {
@@ -206,6 +262,29 @@ function scoreSnippet(text: string): number {
   return signals.reduce((acc, token) => acc + (lowered.includes(token) ? 1 : 0), 0);
 }
 
+async function gpuEmbeddingScore(snippet: string, language: string): Promise<number> {
+  const prompt = `[language=${language}]\n${snippet.slice(0, 900)}`;
+  const response = await fetch(`${OLLAMA_BASE_URL}/api/embeddings`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model: OLLAMA_MODEL, prompt, keep_alive: "30m" })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Ollama embeddings error: ${response.status}`);
+  }
+
+  const data = (await response.json()) as { embedding?: number[] };
+  const emb = data.embedding || [];
+  if (!emb.length) {
+    return 0;
+  }
+
+  // Stable deterministic projection into score range 0..8.
+  const energy = emb.slice(0, 64).reduce((acc, val) => acc + Math.abs(val), 0);
+  return Math.min(8, Math.floor(energy * 10) % 9);
+}
+
 function selectSnippet(content: string): string {
   const lines = content.split(/\r?\n/).slice(0, 40);
   return lines.join("\n").slice(0, 2000);
@@ -222,15 +301,22 @@ async function extractPatterns(repoName: string, repoRoot: string, maxFiles: num
     }
 
     const snippet = selectSnippet(content);
-    const score = scoreSnippet(snippet);
-    if (score < 1) {
+    const lexicalScore = scoreSnippet(snippet);
+    if (lexicalScore < 1) {
+      continue;
+    }
+
+    const language = detectLanguage(file);
+    const gpuScore = await gpuEmbeddingScore(snippet, language);
+    const score = lexicalScore + gpuScore;
+    if (score < 3) {
       continue;
     }
 
     patterns.push({
       repo: repoName,
       file: path.relative(repoRoot, file),
-      language: detectLanguage(file),
+      language,
       snippet,
       extractedAt: nowIso(),
       score
@@ -248,6 +334,7 @@ async function writeWorkspacePatternChunk(patterns: RawPattern[]): Promise<void>
 
 async function run(): Promise<void> {
   await ensureDirs();
+  await assertGpuReady();
 
   const mode = parseArg("mode", "stable");
   const maxRepos = parseIntArg("maxRepos", mode === "turbo" ? 8 : 3);
@@ -298,7 +385,9 @@ async function run(): Promise<void> {
       processedRepos: processed,
       maxFilesPerRepo,
       patternsStored: raw.patterns.length,
-      knowledgeRoot: KN_ROOT
+      knowledgeRoot: KN_ROOT,
+      gpuRequired: GPU_REQUIRED,
+      ollamaModel: OLLAMA_MODEL
     })
   );
 }

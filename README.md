@@ -126,6 +126,14 @@ Desinstalar arranque automatico:
 powershell -ExecutionPolicy Bypass -File tools/remove-autostart.ps1
 ```
 
+## Modo GPU Estricto
+
+El aprendizaje puede ejecutarse en modo GPU estricto (por defecto):
+
+- `GPU_REQUIRED=true`
+- Si no hay GPU activa en `nvidia-smi` o `ollama ps`, el ciclo falla.
+- El scoring de patrones se realiza con embeddings en Ollama (`OLLAMA_MODEL`).
+
 ## Publicacion en GitHub
 
 ```bash
